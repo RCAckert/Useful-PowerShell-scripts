@@ -3,4 +3,42 @@ Disclaimer: THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, 
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #>
 
+#Imports:
+Import-Module MicrosoftTeams
+
+#Provide Instructions
+Write-Host "This program will import
+
+#Get file imput from user.
 $ImportFile = Read-Host "Imput a file that needs to be imported" 
+
+#Import CSV from file
+$ImportList = Import-CSV $ImportFile
+
+foreach ($Item in $ImportList) {
+
+    $UPN = $Item.UserPrincipalName 
+    $PhoneNumber = $Item.PhoneNumber 
+    $Type = "DirectRouting"
+    try
+    {
+        Set-CsPhoneNumberAssignment -Identity $UPN -PhoneNumber $PhoneNumber -PhoneNumberType $Type  -ErrorAction STOP
+        Grant-CsOnlineVoiceRoutingPolicy -Identity $UPN -PolicyName "REPLACE" -ErrorAction STOP 
+        Grant-CsTeamsEmergencyCallRoutingPolicy -Identity $UPN -PolicyName "REPLACE" -ErrorAction STOP 
+        $Result = "The user $UPN has been assigned $PhoneNumber"
+        Write-Host $Result  -ForegroundColor Cyan 
+
+    }
+    catch
+    {
+        $Result = "$UPN has an error"
+        Write-Host $Result -ForegroundColor Red 
+    }
+    Finally
+    {
+        $User | Add-Member -MemberType NoteProperty -Name "Result" -Value $Result -Force 
+    }
+
+
+
+
